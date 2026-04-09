@@ -9,7 +9,11 @@
 
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _openai: OpenAI | null = null;
+function getOpenAI() {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return _openai;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -64,7 +68,7 @@ Classify it into exactly ONE of these categories:
 
 Respond with ONLY the category slug (lowercase, no punctuation). No explanation.`;
 
-  const res = await openai.chat.completions.create({
+  const res = await getOpenAI().chat.completions.create({
     model: "gpt-4o-mini",
     messages: [{ role: "user", content: prompt }],
     max_tokens: 10,
@@ -105,7 +109,7 @@ Rules:
 
 Return ONLY the JSON array, no markdown, no explanation.`;
 
-  const res = await openai.chat.completions.create({
+  const res = await getOpenAI().chat.completions.create({
     model:       "gpt-4o",
     messages:    [{ role: "user", content: prompt }],
     max_tokens:  800,
@@ -138,7 +142,7 @@ Write a concise, professional weekly report in plain English (2–3 short paragr
 
 Keep it sharp, direct, and data-driven. Use dollar amounts and percentages. Write as if talking directly to Evan.`;
 
-  const res = await openai.chat.completions.create({
+  const res = await getOpenAI().chat.completions.create({
     model:       "gpt-4o",
     messages:    [{ role: "user", content: prompt }],
     max_tokens:  400,
