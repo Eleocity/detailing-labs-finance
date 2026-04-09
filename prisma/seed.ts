@@ -1,4 +1,4 @@
-import { PrismaClient, Decimal } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { subDays, subHours } from "date-fns";
 
 const prisma = new PrismaClient();
@@ -92,10 +92,10 @@ async function main() {
         customerId: customers[job.customerIdx].id,
         serviceType: job.serviceType,
         serviceLabel: job.serviceLabel,
-        price: new Decimal(job.price),
-        estimatedCost: new Decimal(job.cost),
-        profit: new Decimal(profit.toFixed(2)),
-        profitMargin: new Decimal(margin.toFixed(2)),
+        price: job.price,
+        estimatedCost: job.cost,
+        profit: profit.toFixed(2),
+        profitMargin: margin.toFixed(2),
         status: "completed",
         scheduledAt,
         completedAt: subHours(scheduledAt, -2),
@@ -127,7 +127,7 @@ async function main() {
     if (!existing) {
       await prisma.expense.create({
         data: {
-          amount: new Decimal(exp.amount),
+          amount: exp.amount,
           category: exp.category,
           description: exp.description,
           date: exp.date,
