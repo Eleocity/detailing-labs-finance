@@ -82,7 +82,7 @@ export async function buildFinancialSummary(
   const byType = new Map<string, { revenue: number; count: number; margins: number[] }>();
   for (const j of jobs) {
     const entry = byType.get(j.serviceType) ?? { revenue: 0, count: 0, margins: [] };
-    const cost  = Number(j.estimatedCost ?? j.price * 0.18);
+    const cost  = Number(j.estimatedCost ?? Number(j.price) * 0.18);
     const m     = ((Number(j.price) - cost) / Number(j.price)) * 100;
     entry.revenue += Number(j.price);
     entry.count++;
