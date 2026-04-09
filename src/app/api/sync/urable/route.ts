@@ -13,9 +13,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const syncLog = await prisma.syncLog.create({
-    data: { source: "urable", status: "running" },
-  });
+  if (!process.env.URABLE_API_KEY) {
+    return NextResponse.json({ error: "URABLE_API_KEY is not configured" }, { status: 500 });
+  }
+
+  let syncLog;
+  try {
+    syncLog = await prisma.syncLog.create({
+      data: { source: "urable", status: "running" },
+    });
+  } catch (err: any) {
+    console.error("Failed to create SyncLog:", err);
+    return NextResponse.json({ error: `DB error: ${err.message}` }, { status: 500 });
+  }
 
   try {
     // Find last sync to only pull new jobs
@@ -110,14 +120,16 @@ export async function POST(req: NextRequest) {
       updated,
     });
   } catch (err: any) {
-    await prisma.syncLog.update({
-      where: { id: syncLog.id },
-      data: {
-        status:       "error",
-        errorMessage: err.message,
-        completedAt:  new Date(),
-      },
-    });
+    if (syncLog) {
+      await prisma.syncLog.update({
+        where: { id: syncLog.id },
+        data: {
+          status:       "error",
+          errorMessage: err.message,
+          completedAt:  new Date(),
+        },
+      });
+    }
 
     console.error("Urable sync failed:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
