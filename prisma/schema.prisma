@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  urableId  String?  @unique
+  firstName String
+  lastName  String
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  jobs      Job[]
+}
+
+model Job {
+  id              String    @id @default(cuid())
+  urableId        String?   @unique
+  customerId      String
+  customer        Customer  @relation(fields: [customerId], references: [id])
+  serviceType     String
+  serviceLabel    String
+  price           Decimal   @db.Decimal(10, 2)
+  estimatedCost   Decimal?  @db.Decimal(10, 2)
+  profit          Decimal?  @db.Decimal(10, 2)
+  profitMargin    Decimal?  @db.Decimal(5, 2)
+  status          String    @default("completed")
+  scheduledAt     DateTime
+  completedAt     DateTime?
+  notes           String?
+  addOns          Json?     // [{name, price}]
+  rawUrableData   Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([scheduledAt])
+  @@index([serviceType])
+  @@index([customerId])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  amount      Decimal  @db.Decimal(10, 2)
+  category    String
+  description String
+  notes       String?
+  date        DateTime
+  receipt     String?  // URL to receipt image
+  aiCategory  String?  // AI-suggested category
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([category])
+}
+
+model Insight {
+  id        String   @id @default(cuid())
+  type      String   // "trend" | "anomaly" | "recommendation" | "alert"
+  severity  String   @default("info") // "info" | "warning" | "success" | "critical"
+  title     String
+  body      String
+  data      Json?    // supporting data points
+  period    String?  // "daily" | "weekly" | "monthly"
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type])
+}
+
+model SyncLog {
+  id           String   @id @default(cuid())
+  source       String   // "urable"
+  status       String   // "success" | "error" | "partial"
+  jobsSynced   Int      @default(0)
+  jobsCreated  Int      @default(0)
+  jobsUpdated  Int      @default(0)
+  errorMessage String?
+  startedAt    DateTime @default(now())
+  completedAt  DateTime?
+  metadata     Json?
+}
+
+model ExpenseCategory {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  color       String  // hex color for charts
+  isCOGS      Boolean @default(false)
+  description String?
+}
